@@ -47,17 +47,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     const { data: members } = await supabase
       .from("journal_members")
-      .select("journal_id, journals(invite_code)")
+      .select("journal_id")
       .eq("user_id", userId)
       .limit(1);
     if (members && members.length > 0) {
-      const row = members[0] as { journal_id: string; journals: { invite_code: string } | { invite_code: string }[] | null };
-      const j = row.journals;
-      const code = Array.isArray(j) ? j[0]?.invite_code : j?.invite_code ?? null;
+      const journalId = members[0].journal_id;
+      const { data: journal } = await supabase
+        .from("journals")
+        .select("invite_code")
+        .eq("id", journalId)
+        .single();
+      const code = journal?.invite_code ?? null;
       setState((s) => ({
         ...s,
-        journalId: row.journal_id,
-        inviteCode: code ?? null,
+        journalId,
+        inviteCode: code,
       }));
       return;
     }
