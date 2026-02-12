@@ -286,11 +286,25 @@ export default function Home() {
             {hasSupabase && auth?.user ? (
               <>
                 <p>{auth.user.email}</p>
-                {auth.inviteCode != null && auth.inviteCode !== "" && (
-                  <p className="mt-1.5">
-                    Invite code: <span className="font-mono font-semibold text-slate-300">{auth.inviteCode}</span>
-                  </p>
-                )}
+                <div className="mt-1.5">
+                  <p className="text-slate-400">Share with partner</p>
+                  {auth.inviteCode ? (
+                    <p className="mt-0.5">
+                      Invite code: <span className="font-mono font-semibold text-slate-200">{auth.inviteCode}</span>
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-slate-500">
+                      {auth.journalId ? "Loading code…" : "…"}
+                      <button
+                        type="button"
+                        onClick={() => auth.refreshInviteCode()}
+                        className="ml-1.5 text-indigo-300 hover:text-indigo-200"
+                      >
+                        Get code
+                      </button>
+                    </p>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => auth.signOut()}

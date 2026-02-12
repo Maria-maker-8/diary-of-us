@@ -22,6 +22,7 @@ type AuthContextValue = AuthState & {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   joinWithCode: (code: string) => Promise<{ error: Error | null }>;
+  refreshInviteCode: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -83,6 +84,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const refreshInviteCode = useCallback(async () => {
+    if (!supabase || !state.journalId) return;
+    const { data } = await supabase
+      .from("journals")
+      .select("invite_code")
+      .eq("id", state.journalId)
+      .single();
+    if (data?.invite_code) {
+      setState((s) => ({ ...s, inviteCode: data.invite_code }));
+    }
+  }, [state.journalId]);
+
   useEffect(() => {
     if (!supabase) {
       setState((s) => ({ ...s, loading: false }));
@@ -120,6 +133,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, [ensureJournal]);
+
+  useEffect(() => {
+    if (state.journalId && !state.inviteCode && supabase) {
+      refreshInviteCode();
+    }
+  }, [state.journalId, state.inviteCode, refreshInviteCode]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
@@ -180,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signUp,
     signOut,
     joinWithCode,
+    refreshInviteCode,
   };
 
   return (
