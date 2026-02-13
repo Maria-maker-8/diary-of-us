@@ -25,8 +25,10 @@ export function CountdownWidget({
   onRemove,
   canRemove,
 }: Props) {
-  const hasEvent = config && config.eventName.trim() && config.eventDate;
-  const days = hasEvent ? daysUntil(config.eventDate) : 0;
+  const eventName = typeof config?.eventName === "string" ? config.eventName : "";
+  const eventDate = typeof config?.eventDate === "string" ? config.eventDate : "";
+  const hasEvent = eventName.trim().length > 0 && eventDate.length > 0;
+  const days = hasEvent ? daysUntil(eventDate) : 0;
 
   return (
     <WidgetCard
@@ -43,7 +45,7 @@ export function CountdownWidget({
               {days.toLocaleString()}
             </p>
             <p className="text-xs text-slate-400">
-              days until {config.eventName}
+            days until {eventName}
             </p>
           </>
         ) : (
