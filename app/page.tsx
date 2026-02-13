@@ -84,7 +84,6 @@ export default function Home() {
       const widgetsData = await fetchWidgets(journalId);
       if (cancelled) return;
       setPages(pagesData.map((p) => ({ ...p, hint: p.hint ?? "" })));
-      if (pagesData[0]) setSelectedPageId(pagesData[0].id);
       if (widgetsData) {
         setWidgetOrder((prev) => (prev.length > 0 ? prev : widgetsData.order));
      setWidgetConfigs((prev) => (prev ?? widgetsData.configs));
@@ -118,12 +117,14 @@ export default function Home() {
   const [pages, setPages] = useState<Page[]>(() =>
     LOCAL_DEFAULT_PAGES.map((p) => ({ ...p, content: "" })),
   );
-  const [selectedPageId, setSelectedPageId] = useState<string>(
-    LOCAL_DEFAULT_PAGES[0]?.id ?? "",
-  );
-
+  // null = home/dashboard, id = a specific page
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  
   const selectedPage = useMemo(
-    () => pages.find((p) => p.id === selectedPageId) ?? pages[0],
+    () =>
+      selectedPageId
+        ? pages.find((p) => p.id === selectedPageId) ?? null
+        : null,
     [pages, selectedPageId],
   );
 
@@ -238,54 +239,82 @@ export default function Home() {
           </div>
 
           <nav className="flex flex-1 flex-col gap-4 overflow-y-auto">
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Pages
-              </p>
-              <ul className="space-y-1.5">
-                {pages.map((page) => {
-                  const isActive = page.id === selectedPage?.id;
-                  return (
-                    <li key={page.id}>
-                      <button
-                        onClick={() => {
-                          setSelectedPageId(page.id);
-                          setSidebarOpen(false);
-                        }}
-                        className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm text-slate-100 shadow-sm transition ${
-                          isActive
-                            ? "border-[rgba(148,163,255,0.9)] bg-gradient-to-r from-[rgba(31,41,105,0.95)] to-[rgba(30,64,175,0.9)]"
-                            : "border-white/5 bg-gradient-to-r from-[rgba(16,24,64,0.9)] to-[rgba(18,24,56,0.85)] hover:border-white/15 hover:bg-white/5"
-                        }`}
-                      >
-                        <span className="text-lg leading-none">{page.emoji}</span>
-                        <span className="flex-1 truncate">{page.title}</span>
-                        <span
-                          className={`text-[10px] uppercase tracking-[0.22em] ${
-                            isActive
-                              ? "text-slate-100"
-                              : "text-slate-500 group-hover:text-slate-300"
-                          }`}
-                        >
-                          {isActive ? "open" : "open"}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+  <div>
+    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+      Views
+    </p>
+    <ul className="mb-3 space-y-1.5">
+      <li>
+        <button
+          onClick={() => setSelectedPageId(null)}
+          className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm text-slate-100 shadow-sm transition ${
+            selectedPageId === null
+              ? "border-[rgba(148,163,255,0.9)] bg-gradient-to-r from-[rgba(31,41,105,0.95)] to-[rgba(30,64,175,0.9)]"
+              : "border-white/5 bg-gradient-to-r from-[rgba(16,24,64,0.9)] to-[rgba(18,24,56,0.85)] hover:border-white/15 hover:bg-white/5"
+          }`}
+        >
+          <span className="text-lg leading-none">🏠</span>
+          <span className="flex-1 truncate">Dashboard</span>
+          <span
+            className={`text-[10px] uppercase tracking-[0.22em] ${
+              selectedPageId === null
+                ? "text-slate-100"
+                : "text-slate-500 group-hover:text-slate-300"
+            }`}
+          >
+            home
+          </span>
+        </button>
+      </li>
+    </ul>
 
+    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+      Pages
+    </p>
+    <ul className="space-y-1.5">
+      {pages.map((page) => {
+        const isActive = page.id === selectedPageId;
+        return (
+          <li key={page.id}>
             <button
-              onClick={handleAddPage}
-              className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-500/35 bg-transparent px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-300 hover:bg-white/5"
+              onClick={() => {
+                setSelectedPageId(page.id);
+                setSidebarOpen(false);
+              }}
+              className={`group flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left text-sm text-slate-100 shadow-sm transition ${
+                isActive
+                  ? "border-[rgba(148,163,255,0.9)] bg-gradient-to-r from-[rgba(31,41,105,0.95)] to-[rgba(30,64,175,0.9)]"
+                  : "border-white/5 bg-gradient-to-r from-[rgba(16,24,64,0.9)] to-[rgba(18,24,56,0.85)] hover:border-white/15 hover:bg-white/5"
+              }`}
             >
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-300/10 text-base text-slate-100">
-                +
+              <span className="text-lg leading-none">{page.emoji}</span>
+              <span className="flex-1 truncate">{page.title}</span>
+              <span
+                className={`text-[10px] uppercase tracking-[0.22em] ${
+                  isActive
+                    ? "text-slate-100"
+                    : "text-slate-500 group-hover:text-slate-300"
+                }`}
+              >
+                {isActive ? "open" : "open"}
               </span>
-              New page
             </button>
-          </nav>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+
+  <button
+    onClick={handleAddPage}
+    className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-slate-500/35 bg-transparent px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-slate-300 hover:bg-white/5"
+  >
+    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-300/10 text-base text-slate-100">
+      +
+    </span>
+    New page
+  </button>
+</nav>
 
           <div className="mt-4 border-t border-white/5 pt-3 text-[11px] text-slate-500">
             {hasSupabase && auth?.user ? (
@@ -371,198 +400,202 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Widget grid */}
-            <section>
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                  Dashboard widgets
-                </p>
-              </div>
-
-              {widgetConfigs === null ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="rounded-2xl border border-white/8 bg-[#1a1f3a]/80 p-4 animate-pulse"
-                    >
-                      <div className="h-4 w-3/4 rounded bg-white/10" />
-                      <div className="mt-2 h-3 w-full rounded bg-white/5" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {widgetOrder.map((widgetId, index) => {
-                    const canMoveUp = index > 0;
-                    const canMoveDown = index < widgetOrder.length - 1;
-                    const isRemovable =
-                      widgetId !== "add-widgets" && widgetOrder.length > 1;
-
-                    if (widgetId === "days-together") {
-                      return (
-                        <div key={widgetId} className="relative">
-                          <DaysTogetherWidget
-                            config={widgetConfigs["days-together"]}
-                            onEdit={() => setEditingWidgetId("days-together")}
-                            onRemove={() => handleRemoveWidget("days-together")}
-                            canRemove={isRemovable}
-                          />
-                          <WidgetReorderButtons
-                            onMoveUp={() => handleMoveWidget(widgetId, "up")}
-                            onMoveDown={() =>
-                              handleMoveWidget(widgetId, "down")
-                            }
-                            canMoveUp={canMoveUp}
-                            canMoveDown={canMoveDown}
-                          />
-                        </div>
-                      );
-                    }
-                    if (widgetId === "countdown") {
-                      return (
-                        <div key={widgetId} className="relative">
-                          <CountdownWidget
-                            config={widgetConfigs.countdown}
-                            onEdit={() => setEditingWidgetId("countdown")}
-                            onRemove={() => handleRemoveWidget("countdown")}
-                            canRemove={isRemovable}
-                          />
-                          <WidgetReorderButtons
-                            onMoveUp={() => handleMoveWidget(widgetId, "up")}
-                            onMoveDown={() =>
-                              handleMoveWidget(widgetId, "down")
-                            }
-                            canMoveUp={canMoveUp}
-                            canMoveDown={canMoveDown}
-                          />
-                        </div>
-                      );
-                    }
-                    if (widgetId === "gesture") {
-                      const gesturePageId =
-                        widgetConfigs.gesture.variant === "him"
-                          ? "gesture-make-him-smile"
-                          : "gesture-make-her-smile";
-                      const gesturePage = pages.find(
-                        (p) => p.id === gesturePageId,
-                      );
-                      const gestureLines = htmlContentToLines(
-                        gesturePage?.content ?? "",
-                      );
-
-                      return (
-                        <div key={widgetId} className="relative">
-                          <GestureWidget
-                            config={widgetConfigs.gesture}
-                            gestureLines={gestureLines}
-                            onEdit={() => setEditingWidgetId("gesture")}
-                            onRemove={() => handleRemoveWidget("gesture")}
-                            canRemove={isRemovable}
-                          />
-                          <WidgetReorderButtons
-                            onMoveUp={() => handleMoveWidget(widgetId, "up")}
-                            onMoveDown={() =>
-                              handleMoveWidget(widgetId, "down")
-                            }
-                            canMoveUp={canMoveUp}
-                            canMoveDown={canMoveDown}
-                          />
-                        </div>
-                      );
-                    }
-                    if (widgetId === "add-widgets") {
-                      return (
-                        <div key={widgetId} className="relative">
-                          <AddWidgetsPlaceholder
-                            currentOrder={widgetOrder}
-                            onRestore={(id) =>
-                              setWidgetOrder((prev) => {
-                                const i = prev.indexOf("add-widgets");
-                                if (i < 0) return [...prev, id];
-                                const next = [...prev];
-                                next.splice(i, 0, id);
-                                return next;
-                              })
-                            }
-                          />
-                          <WidgetReorderButtons
-                            onMoveUp={() => handleMoveWidget(widgetId, "up")}
-                            onMoveDown={() =>
-                              handleMoveWidget(widgetId, "down")
-                            }
-                            canMoveUp={canMoveUp}
-                            canMoveDown={canMoveDown}
-                          />
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              )}
-
-              {editingWidgetId && widgetConfigs && (
-                <WidgetEditModal
-                  widgetId={editingWidgetId}
-                  configs={widgetConfigs}
-                  onSave={handleWidgetConfigChange}
-                  onClose={() => setEditingWidgetId(null)}
-                />
-              )}
-            </section>
-
-            {/* Current page surface (lightweight editor placeholder) */}
-            <section className="pb-8">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/40 text-2xl shadow-inner ring-1 ring-white/10">
-                    {selectedPage?.emoji}
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
-                      Current page
-                    </p>
-                    <h2 className="text-base font-semibold tracking-tight text-slate-50 md:text-lg">
-                      {selectedPage?.title}
-                    </h2>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                  <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 font-medium text-slate-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    {journalId ? "Saved to cloud" : "Draft in this tab only"}
-                  </div>
-                  <button
-                    onClick={handleDeleteCurrentPage}
-                    disabled={!selectedPage || pages.length <= 1}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-transparent px-3 py-1.5 font-medium text-rose-300/90 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:border-white/5 disabled:text-slate-600"
-                  >
-                    <span className="text-xs">Delete page</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-white/8 bg-[radial-gradient(circle_at_top,_rgba(91,108,255,0.14),transparent_55%),_radial-gradient(circle_at_bottom,_rgba(59,179,255,0.16),transparent_55%),_rgba(5,8,25,0.96)] shadow-[0_16px_60px_rgba(15,23,42,0.9)]">
-                <div className="border-b border-white/10 bg-black/40 px-3.5 py-2 text-[11px] text-slate-400">
-                  Select text to format with <strong className="text-slate-200">bold</strong>, <em className="text-slate-200">italic</em>, <span className="underline text-slate-200">underline</span>.
-                </div>
-                <div className="px-4 py-4 md:px-6 md:py-5">
-                  <p className="mb-2 text-xs text-slate-400">
-                    {selectedPage?.hint}
+                        {/* Widget grid – only on home/dashboard */}
+                        {selectedPageId === null && (
+              <section>
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Dashboard widgets
                   </p>
-                  <RichTextEditor
-                    key={selectedPage?.id}
-                    value={selectedPage?.content ?? ""}
-                    onChange={(html) =>
-                      selectedPage &&
-                      handleUpdateContent(selectedPage.id, html)
-                    }
-                    placeholder="Start writing…"
-                  />
                 </div>
-              </div>
-            </section>
+
+                {widgetConfigs === null ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="rounded-2xl border border-white/8 bg-[#1a1f3a]/80 p-4 animate-pulse"
+                      >
+                        <div className="h-4 w-3/4 rounded bg-white/10" />
+                        <div className="mt-2 h-3 w-full rounded bg-white/5" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {widgetOrder.map((widgetId, index) => {
+                      const canMoveUp = index > 0;
+                      const canMoveDown = index < widgetOrder.length - 1;
+                      const isRemovable =
+                        widgetId !== "add-widgets" && widgetOrder.length > 1;
+
+                      if (widgetId === "days-together") {
+                        return (
+                          <div key={widgetId} className="relative">
+                            <DaysTogetherWidget
+                              config={widgetConfigs["days-together"]}
+                              onEdit={() => setEditingWidgetId("days-together")}
+                              onRemove={() => handleRemoveWidget("days-together")}
+                              canRemove={isRemovable}
+                            />
+                            <WidgetReorderButtons
+                              onMoveUp={() => handleMoveWidget(widgetId, "up")}
+                              onMoveDown={() =>
+                                handleMoveWidget(widgetId, "down")
+                              }
+                              canMoveUp={canMoveUp}
+                              canMoveDown={canMoveDown}
+                            />
+                          </div>
+                        );
+                      }
+                      if (widgetId === "countdown") {
+                        return (
+                          <div key={widgetId} className="relative">
+                            <CountdownWidget
+                              config={widgetConfigs.countdown}
+                              onEdit={() => setEditingWidgetId("countdown")}
+                              onRemove={() => handleRemoveWidget("countdown")}
+                              canRemove={isRemovable}
+                            />
+                            <WidgetReorderButtons
+                              onMoveUp={() => handleMoveWidget(widgetId, "up")}
+                              onMoveDown={() =>
+                                handleMoveWidget(widgetId, "down")
+                              }
+                              canMoveUp={canMoveUp}
+                              canMoveDown={canMoveDown}
+                            />
+                          </div>
+                        );
+                      }
+                      if (widgetId === "gesture") {
+                        const gesturePageId =
+                          widgetConfigs.gesture.variant === "him"
+                            ? "gesture-make-him-smile"
+                            : "gesture-make-her-smile";
+                        const gesturePage = pages.find(
+                          (p) => p.id === gesturePageId,
+                        );
+                        const gestureLines = htmlContentToLines(
+                          gesturePage?.content ?? "",
+                        );
+
+                        return (
+                          <div key={widgetId} className="relative">
+                            <GestureWidget
+                              config={widgetConfigs.gesture}
+                              gestureLines={gestureLines}
+                              onEdit={() => setEditingWidgetId("gesture")}
+                              onRemove={() => handleRemoveWidget("gesture")}
+                              canRemove={isRemovable}
+                            />
+                            <WidgetReorderButtons
+                              onMoveUp={() => handleMoveWidget(widgetId, "up")}
+                              onMoveDown={() =>
+                                handleMoveWidget(widgetId, "down")
+                              }
+                              canMoveUp={canMoveUp}
+                              canMoveDown={canMoveDown}
+                            />
+                          </div>
+                        );
+                      }
+                      if (widgetId === "add-widgets") {
+                        return (
+                          <div key={widgetId} className="relative">
+                            <AddWidgetsPlaceholder
+                              currentOrder={widgetOrder}
+                              onRestore={(id) =>
+                                setWidgetOrder((prev) => {
+                                  const i = prev.indexOf("add-widgets");
+                                  if (i < 0) return [...prev, id];
+                                  const next = [...prev];
+                                  next.splice(i, 0, id);
+                                  return next;
+                                })
+                              }
+                            />
+                            <WidgetReorderButtons
+                              onMoveUp={() => handleMoveWidget(widgetId, "up")}
+                              onMoveDown={() =>
+                                handleMoveWidget(widgetId, "down")
+                              }
+                              canMoveUp={canMoveUp}
+                              canMoveDown={canMoveDown}
+                            />
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+                )}
+
+                {editingWidgetId && widgetConfigs && (
+                  <WidgetEditModal
+                    widgetId={editingWidgetId}
+                    configs={widgetConfigs}
+                    onSave={handleWidgetConfigChange}
+                    onClose={() => setEditingWidgetId(null)}
+                  />
+                )}
+              </section>
+            )}
+
+            {/* Current page surface – only when a page is selected */}
+            {selectedPageId !== null && selectedPage && (
+              <section className="pb-8">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-black/40 text-2xl shadow-inner ring-1 ring-white/10">
+                      {selectedPage?.emoji}
+                    </span>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500">
+                        Current page
+                      </p>
+                      <h2 className="text-base font-semibold tracking-tight text-slate-50 md:text-lg">
+                        {selectedPage?.title}
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                    <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 font-medium text-slate-300">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                      {journalId ? "Saved to cloud" : "Draft in this tab only"}
+                    </div>
+                    <button
+                      onClick={handleDeleteCurrentPage}
+                      disabled={!selectedPage || pages.length <= 1}
+                      className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-transparent px-3 py-1.5 font-medium text-rose-300/90 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:border-white/5 disabled:text-slate-600"
+                    >
+                      <span className="text-xs">Delete page</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-white/8 bg-[radial-gradient(circle_at_top,_rgba(91,108,255,0.14),transparent_55%),_radial-gradient(circle_at_bottom,_rgba(59,179,255,0.16),transparent_55%),_rgba(5,8,25,0.96)] shadow-[0_16px_60px_rgba(15,23,42,0.9)]">
+                  <div className="border-b border-white/10 bg-black/40 px-3.5 py-2 text-[11px] text-slate-400">
+                    Select text to format with <strong className="text-slate-200">bold</strong>, <em className="text-slate-200">italic</em>, <span className="underline text-slate-200">underline</span>.
+                  </div>
+                  <div className="px-4 py-4 md:px-6 md:py-5">
+                    <p className="mb-2 text-xs text-slate-400">
+                      {selectedPage?.hint}
+                    </p>
+                    <RichTextEditor
+                      key={selectedPage?.id}
+                      value={selectedPage?.content ?? ""}
+                      onChange={(html) =>
+                        selectedPage &&
+                        handleUpdateContent(selectedPage.id, html)
+                      }
+                      placeholder="Start writing…"
+                    />
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
         </main>
       </div>
