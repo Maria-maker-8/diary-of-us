@@ -86,9 +86,9 @@ export default function Home() {
       setPages(pagesData.map((p) => ({ ...p, hint: p.hint ?? "" })));
       if (pagesData[0]) setSelectedPageId(pagesData[0].id);
       if (widgetsData) {
-        setWidgetOrder(widgetsData.order);
-        setWidgetConfigs(widgetsData.configs);
-      }
+        setWidgetOrder((prev) => (prev.length > 0 ? prev : widgetsData.order));
+     setWidgetConfigs((prev) => (prev ?? widgetsData.configs));
+   }
     })();
     return () => { cancelled = true; };
   }, [journalId]);
