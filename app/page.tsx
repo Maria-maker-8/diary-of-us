@@ -61,10 +61,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (journalId && widgetConfigs !== null && widgetOrder.length > 0) {
+    if (widgetConfigs === null || widgetOrder.length === 0) return;
+  
+    // Always keep a local copy so widgets persist for this browser,
+    // even if Supabase is not configured or the user is signed out.
+    saveWidgetState(widgetOrder, widgetConfigs);
+  
+    // If we have a journal in Supabase, mirror the widget state there too.
+    if (journalId && hasSupabase) {
       saveWidgets(journalId, widgetOrder, widgetConfigs).catch(() => {});
-    } else if (!hasSupabase && widgetConfigs !== null && widgetOrder.length > 0) {
-      saveWidgetState(widgetOrder, widgetConfigs);
     }
   }, [journalId, widgetOrder, widgetConfigs]);
 
